@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package protobuf;
+
+message FileInfo {
+    string filename = 1;
+    string fileformat = 2;
+    string created_at = 3;
+    string updated_at = 4;
+}
+
+message Image {
+    FileInfo info = 1;
+    bytes data = 2;
+}
+
+message UploadRequest {
+    Image image = 1;
+}
+
+message UploadResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message ListFilesRequest {}
+
+message ListFilesResponse {
+    repeated string files = 1;
+}
+
+message DownloadRequest {
+    string filename = 1;
+    string file_format = 2;
+}
+
+message DownloadResponse {
+    Image image = 1;
+}
+
+service FileService {
+    rpc UploadFile( stream UploadRequest) returns (UploadResponse) {}
+    rpc ListFiles(ListFilesRequest) returns (ListFilesResponse) {}
+    rpc DownloadFile(DownloadRequest) returns (stream DownloadResponse) {}
+}
