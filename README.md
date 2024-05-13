@@ -87,9 +87,6 @@ Request:
     }
 }
 ```
-Response:
-```
-```
 
 
 
