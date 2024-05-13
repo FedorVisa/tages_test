@@ -29,7 +29,19 @@ func (s *GRPCServer) DownloadFile(req *protobuf.DownloadRequest, fs protobuf.Fil
 
 	info, _ := dwFile.Stat()
 	parts := strings.Split(fileName, "_")
-	createDate := parts[0]
+	createDate := ""
+	switch len(parts) {
+	case 1:
+		{
+			createDate = info.ModTime().String()
+		}
+	default:
+		{
+			createDate = parts[0]
+			fileName = strings.Join(parts[1:], "_")
+		}
+
+	}
 	lastUpdate := info.ModTime().String()
 
 	res := &protobuf.DownloadResponse{
@@ -67,7 +79,7 @@ func (s *GRPCServer) UploadFile(server protobuf.FileService_UploadFileServer) er
 
 	req, err := server.Recv()
 	if err == io.EOF {
-		log.Println("File is uploaded")
+		log.Println("File is already uploaded")
 		return nil
 	} else if err != nil {
 		return err
@@ -94,6 +106,8 @@ func (s *GRPCServer) UploadFile(server protobuf.FileService_UploadFileServer) er
 		return nil
 	})
 
+	log.Println("Starting upload ", fileName)
+
 	file, err := os.OpenFile(newFilePath, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		log.Println("Error opening file", fileName)
@@ -101,7 +115,7 @@ func (s *GRPCServer) UploadFile(server protobuf.FileService_UploadFileServer) er
 	}
 	defer file.Close()
 
-	for {
+	for i := 0; ; i++ {
 		req, err := server.Recv()
 		if err == io.EOF {
 			log.Println("File is uploaded")
@@ -115,6 +129,7 @@ func (s *GRPCServer) UploadFile(server protobuf.FileService_UploadFileServer) er
 			log.Println("Error writing file", fileName)
 			return err
 		}
+		fmt.Printf("downloading part: %d\n", i)
 
 	}
 
@@ -138,7 +153,19 @@ func (s *GRPCServer) ListFiles(ctx context.Context, req *protobuf.ListFilesReque
 		fileName := info.Name()
 		modTime := info.ModTime().String()
 		parts := strings.Split(fileName, "_")
-		createDate := parts[0]
+		createDate := ""
+		switch len(parts) {
+		case 1:
+			{
+				createDate = info.ModTime().String()
+			}
+		default:
+			{
+				createDate = parts[0]
+				fileName = strings.Join(parts[1:], "_")
+			}
+
+		}
 		reqString := fmt.Sprintf("%s | %s | %s ", fileName, createDate, modTime)
 		listOfFiles[i] = reqString
 	}
